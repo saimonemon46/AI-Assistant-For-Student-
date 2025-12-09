@@ -1,5 +1,9 @@
 import os
 import mimetypes
+
+from PIL import Image
+import pytesseract
+
 from dotenv import load_dotenv
 from typing import TypedDict, List
 
@@ -40,6 +44,8 @@ def detect_file_node(state: State):
 
         if "pdf" in mime:
             state["file_type"] = "pdf"
+        elif "image" in mime:
+            state["file_type"] = "image"
         else:
             raise ValueError(f"Unsupported file type: {mime}")
 
@@ -65,6 +71,18 @@ def pdf_extractor_node(state: State):
     state["content"] = text
     return state
 
+# -----------------------------
+# Node: image extractor
+# -----------------------------
+def image_extractor_node(state: State):
+    path = state["content"]
+    # Extract text from the image
+    text = pytesseract.image_to_string(Image.open(path))
+    if not text.strip():
+        text = "[No text detected in the image]"
+    
+    state["content"] = text
+    return state
 
 # -----------------------------
 # Node: Chat LLM
@@ -83,6 +101,7 @@ graph = StateGraph(State)
 
 graph.add_node("detect_file_node", detect_file_node)
 graph.add_node("pdf_extractor_node", pdf_extractor_node)
+graph.add_node("image_extractor_node", image_extractor_node)
 graph.add_node("chat_node", chat_node)
 
 graph.add_edge(START, "detect_file_node")
@@ -90,11 +109,18 @@ graph.add_edge(START, "detect_file_node")
 # Conditional routing
 graph.add_conditional_edges(
     "detect_file_node",
-    lambda s: "pdf_extractor_node" if s["file_type"] == "pdf" else "chat_node",
-    {"pdf_extractor_node": "pdf_extractor_node", "chat_node": "chat_node"}
+    lambda s: 
+        "pdf_extractor_node" if s["file_type"] == "pdf"
+        else "image_extractor_node" if s["file_type"] == "image"
+        else "chat_node",
+    {
+        "pdf_extractor_node": "pdf_extractor_node", 
+        "image_extractor_node" : "image_extractor_node",
+        "chat_node": "chat_node"}
 )
 
 graph.add_edge("pdf_extractor_node", "chat_node")
+graph.add_edge("image_extractor_node", "chat_node")
 graph.add_edge("chat_node", END)
 
 # -----------------------------
