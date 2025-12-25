@@ -1,5 +1,5 @@
-from app.graph.graph import build_graph
-from app.graph.state import State
+from graph.graph import build_graph
+from graph.state import State
 
 def main():
     state: State = {
