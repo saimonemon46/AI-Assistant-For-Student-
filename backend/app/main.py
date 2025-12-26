@@ -5,13 +5,14 @@ def main():
     state: State = {
         "messages": [],
         "file_type": "",
+        "mode": "",
         "content": ""
     }
 
     app = build_graph()
 
-    print("AI Chat Agent started. Type 'exit' to quit.")
-    print("Upload file using: file:<full_path>")
+    print("AI Study Assistant started. Type 'exit' to quit.")
+    print("Upload a file using: file:<full_path> or type text / news topic")
 
     while True:
         user_input = input("You: ").strip()
@@ -20,19 +21,14 @@ def main():
 
         if user_input.startswith("file:"):
             path = user_input.replace("file:", "").strip()
-            state["messages"].append({
-                "role": "user",
-                "file_path": path
-            })
+            state["messages"].append({"role": "user", "file_path": path})
         else:
-            state["messages"].append({
-                "role": "user",
-                "content": user_input
-            })
+            state["messages"].append({"role": "user", "content": user_input})
 
         state = app.invoke(state)
-        print("AI:", state["messages"][-1]["content"])
 
+        # Print the latest assistant response
+        print("AI:", state["messages"][-1]["content"])
 
 if __name__ == "__main__":
     main()

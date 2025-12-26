@@ -3,29 +3,44 @@ from services.llm_service import get_llm
 from config.settings import YOUR_NEWSAPI_KEY
 
 llm = get_llm()
-NEWS_API_KEY = YOUR_NEWSAPI_KEY  # register free account
 
 def fetch_news(topic: str = "latest", limit: int = 5):
     url = "https://gnews.io/api/v4/search"
     params = {
         "q": topic,
         "lang": "en",
-        "max": 5,
-        "apikey": NEWS_API_KEY
+        "max": limit,
+        "apikey": YOUR_NEWSAPI_KEY
     }
 
+    response = requests.get(url, params=params, timeout=10)
 
-    response = requests.get(url, params=params)
+    if response.status_code != 200:
+        return []
+
     data = response.json()
-    articles = data.get("articles", [])
-    return articles
+    return data.get("articles", [])
+
 
 def summarize_news(articles):
     if not articles:
-        return "No news found."
+        return "No relevant news found at the moment."
 
-    combined_text = "\n".join([f"Title: {a['title']}\nDescription: {a['description'] or ''}" for a in articles])
-    
-    prompt = f"Summarize these news articles in simple terms for a student:\n\n{combined_text}"
-    response = llm.invoke([{"role": "user", "content": prompt}])
+    combined_text = "\n\n".join(
+        f"Title: {a.get('title', 'No title')}\n"
+        f"Description: {a.get('description', '')}"
+        for a in articles
+    )
+
+    prompt = (
+        "Summarize the following news for a student.\n"
+        "Use simple language.\n"
+        "Highlight facts useful for exams.\n\n"
+        f"{combined_text}"
+    )
+
+    response = llm.invoke([
+        {"role": "user", "content": prompt}
+    ])
+
     return response.content

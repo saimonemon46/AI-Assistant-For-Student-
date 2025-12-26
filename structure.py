@@ -127,3 +127,18 @@
 #                                 │yes  │no
 #                                 ▼     ▼
 #                          Ask next Q   Explain again
+
+
+
+
+
+# START → normalize_input
+#       → detect_intent
+#       → route_by_intent
+#             ├─ chat_agent → END
+#             ├─ news_agent → END
+#             ├─ study_agent
+#                     ├─ pdf → extractor → explain → END
+#                     ├─ image → ocr → explain → END
+#                     └─ text → explain → END
+#             └─ exam_agent (later)
